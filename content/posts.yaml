@@ -1,0 +1,157 @@
+# =============================================================================
+# LinkedIn Content Calendar
+# -----------------------------------------------------------------------------
+# Edit this file to manage your posts. The scheduler reads it every run and
+# publishes any post whose `date` is due (today or earlier) that hasn't been
+# posted yet.
+#
+# Placeholders {{brand_name}}, {{website}}, {{phone}}, {{email}} are filled in
+# from the `brand` block below, so you set your details in ONE place.
+#
+# Each post:
+#   id        : unique, never reuse (used to track what's been posted)
+#   date      : YYYY-MM-DD  -> earliest day it may go out
+#   text      : the post body (LinkedIn "commentary")
+#   hashtags  : list, appended on their own line
+#   image     : OPTIONAL path to an image file (e.g. assets/post1.png)
+#   alt_text  : OPTIONAL accessibility text for the image
+# =============================================================================
+
+brand:
+  brand_name: "AAFT"
+  website: "https://www.aaft.com"
+  phone: "+91 80058 68694"
+  email: "hello@example.com"
+
+posts:
+  - id: "2026-08-launch-01"
+    date: "2026-07-29"
+    text: |
+      "We'll post when we have time."
+
+      That's the sentence killing your brand's reach.
+
+      The algorithm doesn't reward the best content. It rewards the most CONSISTENT content that happens to be good.
+
+      Starting today, {{brand_name}} shows up 3x a week. Not because we ran out of things to say — because your audience forgets you the moment you go quiet.
+
+      Consistency isn't a strategy. It's the price of entry.
+    hashtags: ["#DigitalMarketing", "#ContentStrategy", "#BrandBuilding"]
+
+  - id: "2026-08-launch-02"
+    date: "2026-07-31"
+    text: |
+      Your website isn't slow because of "SEO."
+
+      It's slow because someone stuffed 40 keywords into a page nobody scrolls past.
+
+      Real SEO in 2026 is boring and it works:
+      → Fast pages
+      → One clear answer per page
+      → Content a human actually wants to finish
+
+      Rankings are a side effect of being genuinely useful. Everything else is guessing with confidence.
+    hashtags: ["#SEO", "#WebsiteOptimization", "#GrowthMarketing"]
+
+  - id: "2026-08-launch-03"
+    date: "2026-08-03"
+    text: |
+      A logo is not a brand.
+
+      A brand is what people say about you when your marketing team has logged off.
+
+      You don't control it. You influence it — with every reply, every post, every "sorry we're late" email.
+
+      Spend less on the logo. Spend more on being worth talking about.
+    hashtags: ["#Branding", "#MarketingStrategy", "#BrandIdentity"]
+
+  - id: "2026-08-launch-04"
+    date: "2026-08-05"
+    text: |
+      Most "viral" posts die in 48 hours.
+
+      A good positioning line works for 5 years.
+
+      Chasing the trend gets you a spike. Owning a clear message gets you compounding.
+
+      Ask yourself: if someone described your business in one sentence to a friend, would they get it right?
+
+      If not, no amount of trending audio will save you.
+    hashtags: ["#Positioning", "#ContentMarketing", "#SmallBusiness"]
+
+  - id: "2026-08-launch-05"
+    date: "2026-08-07"
+    text: |
+      "Boost this post" is not a marketing strategy.
+
+      It's a tax you pay for not having one.
+
+      Before you spend a single rupee on ads, you need:
+      → A clear offer
+      → A page that converts
+      → A reason to click that isn't "we're the best"
+
+      Ads pour fuel on the fire. If there's no fire, you're just burning money faster.
+    hashtags: ["#PaidAds", "#PerformanceMarketing", "#ROI"]
+
+  - id: "2026-08-launch-06"
+    date: "2026-08-10"
+    text: |
+      Your competitor isn't winning because they're better.
+
+      They're winning because they show up while you're "planning the strategy."
+
+      Done and posted beats perfect and drafted. Every single time.
+
+      The best content plan is the one that actually ships this week. Start ugly, improve in public.
+    hashtags: ["#Marketing", "#Consistency", "#Execution"]
+
+  - id: "2026-08-launch-07"
+    date: "2026-08-12"
+    text: |
+      Nobody reads your "About Us" page.
+
+      They read the first 7 words of your headline and decide if you're worth their time.
+
+      Marketing isn't about saying more. It's about cutting everything that isn't the point.
+
+      If your homepage needs a paragraph to explain what you do — the paragraph is the problem.
+    hashtags: ["#Copywriting", "#Conversion", "#WebDesign"]
+
+  - id: "2026-08-launch-08"
+    date: "2026-08-14"
+    text: |
+      Followers are a vanity metric.
+
+      Revenue is a sanity metric.
+
+      100,000 followers who never buy is a hobby. 1,000 who trust you is a business.
+
+      Stop optimizing for applause. Start optimizing for the DM that says "how do we work together?"
+    hashtags: ["#SocialMediaMarketing", "#LeadGeneration", "#Business"]
+
+  - id: "2026-08-launch-09"
+    date: "2026-08-17"
+    text: |
+      Every brand thinks it's selling a product.
+
+      The good ones know they're selling a feeling: relief, status, belonging, or time back.
+
+      People don't buy the drill. They buy the hole. And really, they buy the shelf, the tidy room, and looking capable in front of their family.
+
+      Sell the outcome three steps down. That's where the money is.
+    hashtags: ["#MarketingPsychology", "#BrandStrategy", "#Sales"]
+
+  - id: "2026-08-launch-10"
+    date: "2026-08-19"
+    text: |
+      Three weeks ago we said {{brand_name}} would post 3x a week.
+
+      This is post #10. We kept the promise.
+
+      That's the whole pitch. If we do this for our own brand, imagine what we do for yours.
+
+      Ready to stop posting "when you have time"? Let's talk.
+      🌐 {{website}}
+      ✉️ {{email}}
+    hashtags: ["#DigitalMarketing", "#Agency", "#GetInTouch"]

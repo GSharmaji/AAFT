@@ -1,0 +1,54 @@
+name: LinkedIn Scheduler
+
+# Runs every day at 09:00 UTC (~14:30 IST). Any post whose date is due and
+# hasn't been published yet goes out. Adjust the cron to your preferred time.
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:      # lets you trigger a run manually from the Actions tab
+    inputs:
+      dry_run:
+        description: "Dry run (don't actually post)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write          # needed to commit the updated state/posted.json ledger
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scheduler
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          LINKEDIN_VERSION: ${{ secrets.LINKEDIN_VERSION }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python src/scheduler.py --dry-run
+          else
+            python src/scheduler.py
+          fi
+
+      - name: Commit updated ledger
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          git config user.name "linkedin-scheduler[bot]"
+          git config user.email "actions@github.com"
+          if ! git diff --quiet -- state/posted.json; then
+            git add state/posted.json
+            git commit -m "chore: update posted ledger [skip ci]"
+            git push
+          else
+            echo "No new posts published; ledger unchanged."
+          fi
