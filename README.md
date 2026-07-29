@@ -69,6 +69,17 @@ python src/scheduler.py --id 2026-08-launch-01   # force one post now
 
 ---
 
+## Post graphics
+
+Instagram and LinkedIn are visual-first, so every post ships with a designed
+graphic. These are **coded** (not AI-generated) from a locked brand template —
+which keeps headline text pixel-crisp and all 10 posts visually consistent.
+
+- Final images: `assets/post-01.png` … `assets/post-10.png` (1080×1350, 4:5).
+- Source template + how to regenerate/edit: see [`design/README.md`](design/README.md).
+- `content/posts.yaml` links each caption to its image via the `image:` field,
+  so the scheduler publishes the caption **and** the graphic together.
+
 ## Editing your content
 
 Open `content/posts.yaml`:

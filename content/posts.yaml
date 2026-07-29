@@ -25,6 +25,8 @@ brand:
 
 posts:
   - id: "2026-08-launch-01"
+    image: "assets/post-01.png"
+    alt_text: "CONSISTENCY BEATS PERFECTION. The algorithm rewards showing up."
     date: "2026-07-29"
     text: |
       "We'll post when we have time."
@@ -39,6 +41,8 @@ posts:
     hashtags: ["#DigitalMarketing", "#ContentStrategy", "#BrandBuilding"]
 
   - id: "2026-08-launch-02"
+    image: "assets/post-02.png"
+    alt_text: "SEO isn't keywords. It's being useful. Fast pages, one clear answer."
     date: "2026-07-31"
     text: |
       Your website isn't slow because of "SEO."
@@ -54,6 +58,8 @@ posts:
     hashtags: ["#SEO", "#WebsiteOptimization", "#GrowthMarketing"]
 
   - id: "2026-08-launch-03"
+    image: "assets/post-03.png"
+    alt_text: "A logo is not a brand. Your brand is what they say when you've logged off."
     date: "2026-08-03"
     text: |
       A logo is not a brand.
@@ -66,6 +72,8 @@ posts:
     hashtags: ["#Branding", "#MarketingStrategy", "#BrandIdentity"]
 
   - id: "2026-08-launch-04"
+    image: "assets/post-04.png"
+    alt_text: "Trends spike. Positioning compounds. One clear message wins."
     date: "2026-08-05"
     text: |
       Most "viral" posts die in 48 hours.
@@ -80,6 +88,8 @@ posts:
     hashtags: ["#Positioning", "#ContentMarketing", "#SmallBusiness"]
 
   - id: "2026-08-launch-05"
+    image: "assets/post-05.png"
+    alt_text: "'Boost post' is not a strategy. Ads pour fuel on fire."
     date: "2026-08-07"
     text: |
       "Boost this post" is not a marketing strategy.
@@ -95,6 +105,8 @@ posts:
     hashtags: ["#PaidAds", "#PerformanceMarketing", "#ROI"]
 
   - id: "2026-08-launch-06"
+    image: "assets/post-06.png"
+    alt_text: "Done beats perfect, every time. Your competitor is posting while you plan."
     date: "2026-08-10"
     text: |
       Your competitor isn't winning because they're better.
@@ -107,6 +119,8 @@ posts:
     hashtags: ["#Marketing", "#Consistency", "#Execution"]
 
   - id: "2026-08-launch-07"
+    image: "assets/post-07.png"
+    alt_text: "Nobody reads your 'About Us'. They read 7 words of your headline."
     date: "2026-08-12"
     text: |
       Nobody reads your "About Us" page.
@@ -119,6 +133,8 @@ posts:
     hashtags: ["#Copywriting", "#Conversion", "#WebDesign"]
 
   - id: "2026-08-launch-08"
+    image: "assets/post-08.png"
+    alt_text: "Followers are vanity. Revenue is sanity. 1,000 who trust you win."
     date: "2026-08-14"
     text: |
       Followers are a vanity metric.
@@ -131,6 +147,8 @@ posts:
     hashtags: ["#SocialMediaMarketing", "#LeadGeneration", "#Business"]
 
   - id: "2026-08-launch-09"
+    image: "assets/post-09.png"
+    alt_text: "They don't buy the drill, they buy the hole. Sell the outcome."
     date: "2026-08-17"
     text: |
       Every brand thinks it's selling a product.
@@ -143,6 +161,8 @@ posts:
     hashtags: ["#MarketingPsychology", "#BrandStrategy", "#Sales"]
 
   - id: "2026-08-launch-10"
+    image: "assets/post-10.png"
+    alt_text: "10 posts. 3 weeks. Promise kept. Imagine what we do for your brand."
     date: "2026-08-19"
     text: |
       Three weeks ago we said {{brand_name}} would post 3x a week.

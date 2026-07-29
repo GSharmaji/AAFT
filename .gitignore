@@ -3,4 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+node_modules/
 assets/*.tmp
+# intermediate renders; published copies live in assets/
+design/out/
