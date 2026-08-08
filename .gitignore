@@ -7,3 +7,6 @@ node_modules/
 assets/*.tmp
 # intermediate renders; published copies live in assets/
 design/out/
+
+# raw client dashboards — kept local only, never published
+proof-screenshots/
