@@ -1,0 +1,21 @@
+Meta just handed performance marketers a sharper lever — and most people will ignore it. 🎯
+
+There are 4 ways to tell Meta what "good" actually means. Pick the wrong one and you optimise for the wrong outcome:
+
+📈 Highest Volume → most conversions your budget can buy. Great for scaling winners. Careful: it chases volume, not value.
+
+🎯 Cost Per Result → holds a target CPA while it scales. Set the cap too low and delivery stalls.
+
+💰 ROAS Goal (NEW) → optimises for return, prioritising higher-value purchases — not just more orders.
+⚠ The catch: it's only available on NEW ad sets. You can't flip an existing one — duplicate and test.
+
+🎛️ Bid Cap → hard control on your max bid. Powerful, but needs real auction data and active management.
+
+The biggest takeaway?
+The bid strategy is a lever, not a setting. Volume, cost, or profit — match it to the goal.
+
+If you run e-commerce or value-based campaigns, ROAS Goal is worth a test this week.
+
+Still defaulting to Highest Volume — or have you tried the new ROAS Goal? 👇
+
+#MetaAds #PerformanceMarketing #Ecommerce #PaidMedia #D2C #ROAS #DigitalMarketing #FacebookAds
