@@ -11,6 +11,8 @@ Changes for the local `D:\YT Channel\DRR-Automation` job that feeds the **DRR LS
 | 3 | **Enrolment fix:** `course_from_program()` checked "nutrition" before "ayurved". That meant every *Ayurvedic **Nutrition** & Lifestyle* enrolment would have been counted as **Nutrition**. Ayurveda is now checked first, and Advanced Filmmaking enrolments are mapped too. | every `*.py` that has `course_from_program` |
 | 4 | **New tab `Churn Status`** with two tables: Status by Course and Lead Stage by Course. It also has Active Leads, Churn %, Long PDE %, and the roll-up row (Lead + Lead Called … Enrolled). The numbers come from the same Gurgaon month-to-date leads as Daywise. | `build_churn.py` (new) |
 | 5 | The scheduled job runs `build_churn.py` right after `build_daywise.py`. | `run_drr.cmd` |
+| 6 | **Website leads = Source Category "Website" OR Lead Source "Website" / "Intelliticks".** This rule wins over every other channel rule. Intelliticks used to count as **Google Ads**, so from now on Adwords numbers drop and Website numbers rise by the same amount. | `src/transform.py` |
+| 7 | The same rule for Sales-Ops enrolments (Lead Source "Website" / "Intelliticks" → Website). | every `*.py` that has `to_source` |
 
 October Daywise is already locked with 9 courses. On the next run, `build_daywise` adds Film Making as the last block. Nothing else moves.
 
@@ -26,7 +28,8 @@ October Daywise is already locked with 9 courses. On the next run, `build_daywis
    - The script is safe to run again. Each step is skipped if it was already applied.
    - Any step that can't find the code it expects prints `STOP` and leaves that file untouched.
 3. Check the `--- verify ---` lines. All mappings should say `all OK`, and `ACTIVE_ORDER ends with: HO - Film Making`.
-4. Run the job once (or wait for the next 2-hour run). Then check the DRR LSQ Test sheet: `October Daywise` should end with the Film Making block, and a new `Churn Status` tab should appear.
+4. **The script then runs the full job once** (`run_drr.cmd`), so the sheet updates now instead of at the next 2-hour slot. It prints the key lines from that run. To skip this, add `--no-run`. If `PAUSE.flag` exists, the run is skipped. Avoid starting the script right at a scheduled slot (9, 11, 13 … 21h), or two runs will write to the sheet at once.
+5. Check the DRR LSQ Test sheet: `October Daywise` should end with the Film Making block, and a new `Churn Status` tab should appear.
 
 Optional offline test (no Google or LSQ needed): `python test_build_churn.py`. It rebuilds the manual Oct'26 pivots and checks every number against them.
 
@@ -34,6 +37,7 @@ Optional offline test (no Google or LSQ needed): `python test_build_churn.py`. I
 
 - **Check the exact CRM spelling of the new course.** Course matching is exact (case-insensitive). The script covers "Advanced/Advance" + "Filmmaking/Film Making". If the CRM uses anything else, the Health tab flags it as a NEW COURSE VALUE, and Film Making will show zeros.
 - **Meta spend for Film Making.** `src/meta_map.py` matches campaign names by course code. Add the Film Making campaign code there, or its Meta spend lands in OTHER.
+- **Past months.** The Website rule only applies to months pulled after the patch. October is re-pulled on every run, so it is fully on the new rule. Jan–Sep in the year-to-date Formatted_Raw stay on the old rule (Intelliticks = Google) unless you re-pull each month with `DRR_MONTH=YYYY-MM`.
 - **Targets.** `config/targets/2026-10.csv` has no Film Making rows. Pacing stays without it until you add the Overall/Meta/Google targets. The DRR shows ₹3L spend and 651 leads; the Meta/Google split is your call.
 
 ## Pulling into the DRR workbook
