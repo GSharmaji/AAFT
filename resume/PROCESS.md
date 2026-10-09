@@ -46,8 +46,10 @@ One master profile → one tailored resume per job description (JD).
 - Read it as a skeptical recruiter: what would make them reject it in 10 seconds?
 
 ### 6. Output
-- `resume/private/jobs/<company>-<role>/`: `jd.md`, `fit.md` (MQ table + risks), `resume.html`, `resume.pdf`
-- PDF uploaded to Drive → "Job Applications/<company>-<role>".
+- File name: **`Garvit Sharma Resume [Company Name].pdf`** (e.g. `Garvit Sharma Resume Lyxel&Flamingo.pdf`).
+- Working files: `resume/private/jobs/<company>-<role>/` (HTML source + PDF). The container is temporary,
+  so the PDF is sent in chat and the user saves it to Drive → "Job Applications".
+- Fit notes (MQ check, risks) go in the chat reply, not in the resume.
 - Render: `NODE_PATH=/opt/node22/lib/node_modules node resume/render.js <path/to/resume.html>`
 
 ## Rules
