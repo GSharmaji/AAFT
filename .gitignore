@@ -10,3 +10,6 @@ design/out/
 
 # raw client dashboards — kept local only, never published
 proof-screenshots/
+
+# Personal resume data: never commit (this repo is public)
+resume/private/
