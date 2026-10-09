@@ -50,7 +50,11 @@ One master profile → one tailored resume per job description (JD).
 - Working files: `resume/private/jobs/<company>-<role>/` (HTML source + PDF). The container is temporary,
   so the PDF is sent in chat and the user saves it to Drive → "Job Applications".
 - Fit notes (MQ check, risks) go in the chat reply, not in the resume.
-- Render: `NODE_PATH=/opt/node22/lib/node_modules node resume/render.js <path/to/resume.html>`
+- Write only the content as `<Name>.body.html`, wrap it in the shared layout with
+  `python3 resume/build.py "<path>/<Name>.body.html"`, then render:
+  `NODE_PATH=/opt/node22/lib/node_modules node resume/render.js "<path>/<Name>.html"`
+- Several JDs at once: triage all of them first (fit + location table), write only the ones worth applying to,
+  and give reasons for each skip.
 
 ## Rules
 - No invented facts, numbers, titles, or dates. If a fact is missing, ask for it.
