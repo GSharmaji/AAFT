@@ -40,6 +40,8 @@ One master profile → one tailored resume per job description (JD).
 - **Format:** single column, no tables, icons, or images, so applicant tracking systems (ATS) can read it.
 
 ### 5. Check before sending
+- Run `python3 resume/audit.py resume/private/master-profile.md "resume/private/jobs/*/*.pdf"`: every number must trace to the profile.
+- Scan for overclaim words (direct reports, reports to, negotiated, LTV, pitch wins, tool names not in the profile).
 - Every number traces to the master profile. Titles and dates match the profile exactly.
 - Each MQ is visibly covered in the first half of page 1.
 - Keyword check: each top JD keyword appears at least once, naturally.
