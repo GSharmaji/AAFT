@@ -1,6 +1,6 @@
 """
 Checks every number in every tailored resume PDF against the master profile.
-Anything printed is a number the profile doesn't contain: confirm it or remove it before sending.
+Flags numbers the profile doesn't contain, and any em dash, en dash or arrow (banned, see CLAUDE.md).
 Line-wrap artifacts (e.g. '2019' followed by a newline) can show up as false positives; check them by eye.
 
   python3 resume/audit.py resume/private/master-profile.md "resume/private/jobs/*/*.pdf"
@@ -22,4 +22,6 @@ for pdf in sorted(glob.glob(sys.argv[2])):
     missing = sorted({m for m in number.findall(text)
                       if norm(m).rstrip('+') not in small_counts
                       and norm(m).rstrip('+').lstrip('₹$') not in profile})
-    print(f"{pdf}: {', '.join(missing) if missing else 'all numbers found in profile'}")
+    banned = [name for ch, name in (('\u2014', 'EM DASH'), ('\u2013', 'EN DASH'), ('\u2192', 'ARROW')) if ch in text]
+    issues = (['numbers not in profile: ' + ', '.join(missing)] if missing else []) + [f'contains {b}' for b in banned]
+    print(f"{pdf}: {'; '.join(issues) if issues else 'OK'}")

@@ -1,13 +1,13 @@
 # Job-specific resume process
 
-One master profile → one tailored resume per job description (JD).
+One master profile to one tailored resume per job description (JD).
 
 > **This repo is public.** Personal data (contact details, employer numbers, tailored
 > resumes, master profile) lives only in `resume/private/` (gitignored) and in the
 > "Job Applications" folder in Google Drive. Only this method and the template are committed.
 
 ## Inputs
-- **Master profile:** `resume/private/master-profile.md` (copy in Google Drive → "Job Applications").
+- **Master profile:** `resume/private/master-profile.md` (copy in Google Drive to "Job Applications").
   It's the only source of facts. A new session starts by pulling it from Drive.
 - **JD:** pasted by the user.
 
@@ -15,7 +15,7 @@ One master profile → one tailored resume per job description (JD).
 
 ### 1. Break down the JD
 - List the minimum qualifications (MQs), preferred qualifications (PQs), and responsibilities.
-- Pull the 10–15 keywords the screener will look for (tools, skills, metrics, domain words).
+- Pull the 10-15 keywords the screener will look for (tools, skills, metrics, domain words).
 - Note what the role is *really* about in one line (e.g. "B2B content team lead + subscriber growth").
 
 ### 2. MQ gate (do this before writing anything)
@@ -26,7 +26,7 @@ One master profile → one tailored resume per job description (JD).
 - The user decides. Never stretch a fact to clear an MQ.
 
 ### 3. Map evidence to the JD
-- For each MQ, PQ and key responsibility, pick the 1–2 strongest facts from the profile.
+- For each MQ, PQ and key responsibility, pick the 1-2 strongest facts from the profile.
 - Order roles and bullets by relevance to this JD, not by habit.
 - Drop anything that doesn't support this JD.
 
@@ -35,12 +35,13 @@ One master profile → one tailored resume per job description (JD).
 - **Use the JD's own words** where they truthfully describe the work (e.g. "lead-generation funnels" over "lead gen").
 - **Leadership:** state team size, functions, and scope (budget, markets, product lines).
 - **Projects:** add a Projects or Education line only if it shows a skill the JD asks for that your jobs don't already prove.
-- **Summary:** 2–3 lines, built from the JD's top 3 needs.
+- **Summary:** 2-3 lines, built from the JD's top 3 needs.
 - **Length:** 1 page unless the JD is senior and the evidence earns page 2.
 - **Format:** single column, no tables, icons, or images, so applicant tracking systems (ATS) can read it.
 
 ### 5. Check before sending
 - Run `python3 resume/audit.py resume/private/master-profile.md "resume/private/jobs/*/*.pdf"`: every number must trace to the profile.
+- No em dashes, en dashes or arrows anywhere (the audit fails on them). See CLAUDE.md.
 - Scan for overclaim words (direct reports, reports to, negotiated, LTV, pitch wins, tool names not in the profile).
 - Every number traces to the master profile. Titles and dates match the profile exactly.
 - Each MQ is visibly covered in the first half of page 1.
@@ -50,7 +51,7 @@ One master profile → one tailored resume per job description (JD).
 ### 6. Output
 - File name: **`Garvit Sharma Resume [Company Name].pdf`** (e.g. `Garvit Sharma Resume Lyxel&Flamingo.pdf`).
 - Working files: `resume/private/jobs/<company>-<role>/` (HTML source + PDF). The container is temporary,
-  so the PDF is sent in chat and the user saves it to Drive → "Job Applications".
+  so the PDF is sent in chat and the user saves it to Drive to "Job Applications".
 - Fit notes (MQ check, risks) go in the chat reply, not in the resume.
 - Write only the content as `<Name>.body.html`, wrap it in the shared layout with
   `python3 resume/build.py "<path>/<Name>.body.html"`, then render:
