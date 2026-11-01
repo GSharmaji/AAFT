@@ -1,0 +1,103 @@
+name: YouTube — Origin Docs pipeline
+
+# Manual only (Actions tab -> Run workflow). No schedule on purpose:
+# run the first episodes by hand before automating anything.
+#
+#   draft   -> research + script + fact-check, then opens a PR with the draft for review
+#   produce -> renders video, Shorts, thumbnails; uploads them as a workflow artifact
+#              (needs the script approval committed in content/episodes/<ep>/state.yaml)
+#
+# Final approval and publishing happen on your machine, after you have watched the cut.
+
+on:
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: "Episode id from content/calendar.yaml (e.g. ep02-7-eleven)"
+        required: true
+        type: string
+      stage:
+        description: "What to run"
+        required: true
+        type: choice
+        options: [draft, produce]
+      force:
+        description: "draft: overwrite existing research/script"
+        type: boolean
+        default: false
+      preview:
+        description: "produce: fast 480p render"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: youtube-origin-docs/pipeline
+    env:
+      EP: ${{ inputs.episode }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -r requirements.txt
+
+      - name: Check episode id
+        run: |
+          if ! [[ "$EP" =~ ^[a-z0-9-]+$ ]]; then echo "Episode id must be lowercase letters, digits and dashes."; exit 1; fi
+
+      - name: Draft (research -> script -> fact-check)
+        if: inputs.stage == 'draft'
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "Add the ANTHROPIC_API_KEY repository secret first."; exit 1; fi
+          python -m yt draft "$EP" ${{ inputs.force && '--force' || '' }}
+
+      - name: Open a pull request with the draft
+        if: inputs.stage == 'draft'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BR="yt/draft-$EP-${{ github.run_id }}"
+          git config user.name "yt-pipeline[bot]"
+          git config user.email "actions@github.com"
+          git switch -c "$BR"
+          git add "../content/episodes/$EP"
+          git commit -m "Draft $EP: research, script, fact-check"
+          git push -u origin "$BR"
+          gh pr create --base "${{ github.ref_name }}" --head "$BR" \
+            --title "Draft: $EP" \
+            --body "Automated draft. Before merging: apply fixes from factcheck.md, delete every [VERIFY] tag, run \`python -m yt approve $EP script\` and commit state.yaml."
+
+      - name: Produce
+        if: inputs.stage == 'produce'
+        run: python -m yt produce "$EP" ${{ inputs.preview && '--preview' || '' }}
+
+      - name: Upload render as artifact
+        if: inputs.stage == 'produce'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.episode }}-render
+          retention-days: 7
+          path: |
+            youtube-origin-docs/pipeline/work/${{ inputs.episode }}/render/*.mp4
+            youtube-origin-docs/pipeline/work/${{ inputs.episode }}/render/*.srt
+            youtube-origin-docs/pipeline/work/${{ inputs.episode }}/render/chapters.txt
+            youtube-origin-docs/pipeline/work/${{ inputs.episode }}/render/shorts/*.mp4
+            youtube-origin-docs/pipeline/work/${{ inputs.episode }}/thumbnails/thumb-*.jpg

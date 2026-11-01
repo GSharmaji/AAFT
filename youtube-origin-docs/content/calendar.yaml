@@ -1,0 +1,97 @@
+# Episode calendar — the pipeline looks up company/title/publish time here by episode id.
+# Publish slot: Thursday 15:00 UTC (10:00 New York, 15:00 London, 20:30 India).
+# Holiday weeks (26 Nov Thanksgiving, 24 Dec, 31 Dec) usually have lower US viewing.
+# Consider moving those episodes a day earlier, or using them for the weaker topics.
+#
+# status: idea -> researched -> scripted -> approved -> produced -> final-approved -> published
+
+episodes:
+  - id: ep01-fedex
+    company: FedEx
+    title: The ENTIRE History of FedEx in 20 Minutes
+    framework: main
+    score: 23
+    near_death: "1973: $5,000 in the bank, a $24,000 fuel bill, and a night in Las Vegas"
+    publish_at: "2026-11-12T15:00:00Z"
+    status: scripted
+
+  - id: ep02-7-eleven
+    company: 7-Eleven
+    title: The ENTIRE History of 7-Eleven in 19 Minutes
+    framework: main
+    score: 22
+    near_death: "1990: the American parent goes bankrupt; the Japanese licensee ends up owning it"
+    publish_at: "2026-11-19T15:00:00Z"
+    status: idea
+
+  - id: ep03-heinz
+    company: Heinz
+    title: The ENTIRE History of Heinz in 18 Minutes
+    framework: main
+    score: 22
+    near_death: "1875: Henry Heinz's first company goes bankrupt"
+    publish_at: "2026-11-26T15:00:00Z"
+    status: idea
+
+  - id: ep04-dominos
+    company: Domino's
+    title: The ENTIRE History of Domino's in 19 Minutes
+    framework: main
+    score: 21
+    near_death: "The VW Beetle trade, then the 2009 'our pizza tastes like cardboard' turnaround"
+    publish_at: "2026-12-03T15:00:00Z"
+    status: idea
+
+  - id: ep05-pg
+    company: Procter & Gamble
+    title: How P&G Quietly Took Over Your Bathroom
+    framework: quietly-took-over
+    score: 22
+    near_death: "The candle business facing the electric light bulb"
+    publish_at: "2026-12-10T15:00:00Z"
+    status: idea
+
+  - id: ep06-starbucks
+    company: Starbucks
+    title: The ENTIRE History of Starbucks in 21 Minutes
+    framework: main
+    score: 21
+    near_death: "2008: Schultz returns and closes every US store for an afternoon"
+    publish_at: "2026-12-17T15:00:00Z"
+    status: idea
+
+  - id: ep07-coca-cola
+    company: Coca-Cola
+    title: The ENTIRE History of Coca-Cola in 21 Minutes
+    framework: main
+    score: 21
+    near_death: "1985: New Coke"
+    publish_at: "2026-12-24T15:00:00Z"
+    status: idea
+
+  - id: ep08-nvidia
+    company: Nvidia
+    title: The ENTIRE History of Nvidia in 20 Minutes
+    framework: main
+    score: 20
+    near_death: "1996: the first chip fails and cash runs low"
+    publish_at: "2026-12-31T15:00:00Z"
+    status: idea
+
+  - id: ep09-ups
+    company: UPS
+    title: The Real Reason UPS Beat FedEx
+    framework: real-reason
+    score: 22
+    near_death: "The 1997 Teamsters strike"
+    publish_at: "2027-01-07T15:00:00Z"
+    status: idea
+
+  - id: ep10-lego
+    company: LEGO
+    title: LEGO Was 1 Mistake Away From Dying
+    framework: one-mistake-away
+    score: 20
+    near_death: "2003-04: near bankruptcy"
+    publish_at: "2027-01-14T15:00:00Z"
+    status: idea

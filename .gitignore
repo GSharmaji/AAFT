@@ -10,3 +10,7 @@ design/out/
 
 # raw client dashboards — kept local only, never published
 proof-screenshots/
+
+# YouTube pipeline: generated media and Google OAuth files
+youtube-origin-docs/pipeline/work/
+client_secret*.json

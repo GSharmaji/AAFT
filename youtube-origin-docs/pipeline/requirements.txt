@@ -1,0 +1,7 @@
+anthropic>=2.3,<3
+requests>=2.31,<3
+PyYAML>=6.0,<7
+Pillow>=10
+google-api-python-client>=2.100
+google-auth-oauthlib>=1.2
+# System dependency: ffmpeg + ffprobe on PATH (apt install ffmpeg / brew install ffmpeg)

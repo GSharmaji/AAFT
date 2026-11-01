@@ -1,0 +1,74 @@
+# Pipeline config. Paths are relative to this file.
+
+channel:
+  name: "Almost Didn't Exist"     # working name — check the handle is free
+  language: en
+  category_id: "27"              # Education
+  made_for_kids: false
+  description_footer: |
+    Every giant you use today almost didn't exist. New origin story every Thursday.
+    Visuals are original illustrations. Facts double-checked; sources above. Spotted an error? Comment and we'll pin a correction.
+
+paths:
+  calendar: ../content/calendar.yaml
+  episodes: ../content/episodes
+  ideas: ../content/ideas-scored.yaml
+  style_bible: ../strategy/03-style-bible.md
+  example_script: ../content/episodes/ep01-fedex/script.md
+  work: ./work                   # generated media (git-ignored)
+
+llm:
+  model: claude-opus-5-5
+  fallbacks: true                # server-side refusal fallback ("default" routing)
+  effort_research: high
+  effort_write: high
+  effort_light: medium           # shot prompts, packaging, scoring
+  max_web_searches: 25           # research stage
+  max_web_searches_factcheck: 40
+
+voice:
+  provider: elevenlabs           # elevenlabs | silent
+  voice_id: ""                   # pick a warm, mature documentary voice in ElevenLabs; or set ELEVENLABS_VOICE_ID
+  model_id: eleven_multilingual_v2
+  words_per_minute: 145          # used by the silent provider and estimates
+  settings: {}                   # optional overrides: stability, similarity_boost, style
+
+images:
+  provider: openai               # openai | placeholder | manual (you drop PNGs in; see prompts.csv)
+  model: gpt-image-1
+  size: 1536x1024
+  quality: medium
+  parallel: 4
+  # LOCKED. Do not change mid-season (style bible §1).
+  style_prompt: >-
+    Hand-drawn pencil and ink sketch illustration on warm off-white paper, loose confident
+    linework, light watercolor wash in a muted earthy palette (warm browns, slate greys, sage
+    greens, faded ochre), one small accent of brick red, simple round-headed cartoon people with
+    dot eyes and no detailed faces, generous empty paper space, no text, no letters, no logos,
+    no photorealism, 16:9 composition.
+
+shots:
+  min_words: 8                   # ~3.3 s at 145 wpm
+  max_words: 18                  # ~7.4 s
+
+video:
+  width: 1920
+  height: 1080
+  fps: 30
+  prescale: 2                    # render the camera move on a 2x image (smoother); 1 = faster
+  zoom: 1.10                     # how far the slow camera move travels
+  crf: 20
+  preset: medium
+  parallel: 3
+  music: ""                      # path to a licensed music bed (e.g. from the YouTube Audio Library)
+  music_volume: 0.10
+
+labels:
+  font: ../../design/fonts/Poppins-SemiBold.ttf   # swap for a handwritten OFL font (e.g. Patrick Hand) if you like
+
+thumbnails:
+  font: ../../design/fonts/Anton-Regular.ttf
+
+upload:
+  mode: manual                   # manual (upload kit) until your API project passes YouTube's audit; then api
+  contains_synthetic_media: null # true/false sends the flag via the API; null leaves it unset

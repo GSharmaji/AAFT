@@ -1,0 +1,68 @@
+# Packaging for ep01. Titles: first one is used; the others go into Test & Compare.
+titles:
+  - The ENTIRE History of FedEx in 20 Minutes
+  - FedEx Was 1 Mistake Away From Dying
+  - How FedEx Quietly Took Over Your Front Door
+
+description: |
+  FedEx started as a college paper that legend says got a C — and survived because its founder flew to Las Vegas with the company's last $5,000.
+  This is the complete history of FedEx: Fred Smith, the overnight hub in Memphis, the blackjack night, ZapMail, Amazon, and where FedEx goes next.
+
+  In 1973, Federal Express launched with 14 small jets and delivered 186 packages on its first night. Within months it was losing money every week, and it came within days of running out of fuel money. Here's how it survived, how it became a verb, and why its biggest customer became its biggest rival.
+
+  {CHAPTERS}
+
+  Sources (selected):
+  FedEx company history — https://www.fedex.com/en-us/about/company-info/history.html
+  FedEx Form 10-K, fiscal 2026 — https://www.sec.gov/Archives/edgar/data/0001048911/000104891126000105/fdx-20260531.htm
+  FedEx Freight spin-off (June 1, 2026) — https://newsroom.fedexfreight.com/fedex-freight-completes-spin-off-and-begins-trading-on-the-new-york-stock-exchange
+  Roger Frock, "Changing How the World Does Business" (2006)
+  #FedEx #BusinessHistory #CompanyHistory
+
+tags:
+  - FedEx
+  - history of FedEx
+  - Fred Smith
+  - FedEx documentary
+  - company history
+  - business documentary
+  - Federal Express
+  - FedEx blackjack
+  - entire history of
+  - business story
+
+pinned_comment: >-
+  Fred Smith took the company's last $5,000 to a blackjack table — and it worked.
+  If it hadn't, we'd call it the worst decision in business history. Genius or luck? 👇
+  (Spotted an error? Reply here and we'll pin a correction.)
+
+thumbnails:
+  - id: A
+    prompt: >-
+      A tiny round-headed man standing at the foot of an enormous mountain of cardboard boxes
+      that reaches the clouds, a small purple-and-orange cargo jet flying over the top of it.
+    text: ""
+  - id: B
+    prompt: >-
+      A single round-headed man alone at a blackjack table under one hanging lamp, a very small
+      stack of chips in front of him, a giant shadow of a cargo jet on the wall behind him.
+    text: "$5,000"
+  - id: C
+    prompt: >-
+      A young round-headed student at a desk writing a paper, a big red letter grade circled at the
+      top, and through the window behind him a huge cargo jet taking off at night.
+    text: "C GRADE"
+
+shorts:
+  - id: blackjack
+    title: FedEx's founder saved the company at a blackjack table #shorts
+    hook_text: "$5,000 left. A $24,000 fuel bill. Monday."
+    scenes: [s4-03, s4-07]
+  - id: first-night
+    title: FedEx's first night delivered 186 packages #shorts
+    hook_text: "Why every FedEx box flies through one city"
+    scenes: [s3-07, s3-10]
+  - id: c-grade
+    title: The college paper that became FedEx #shorts
+    hook_text: "This 'C' paper became a $90B company"
+    scenes: [s2-06, s2-07]
