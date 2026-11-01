@@ -116,10 +116,19 @@ def _dispatch(cfg: Config, a: argparse.Namespace) -> int:
     sections = [int(x) for x in a.sections.split(",")] if getattr(a, "sections", None) else None
     script = ep.file("script.md")
 
+    # `draft` resumes: steps whose file already exists are skipped (never overwrite a
+    # paid-for research brief or a script you have edited) unless --force is given.
+    resume = a.cmd == "draft" and not a.force
     if a.cmd in ("research", "draft"):
-        print(writing.research(cfg, ep, force=a.force))
+        if resume and ep.file("research.md").exists():
+            print("research.md exists — skipping research (use --force to redo it).")
+        else:
+            print(writing.research(cfg, ep, force=a.force))
     if a.cmd in ("write", "draft"):
-        print(writing.write(cfg, ep, force=a.force or a.cmd == "draft", next_episode=_calendar_next(cfg, ep.id)))
+        if resume and script.exists():
+            print("script.md exists — skipping the script (use --force to overwrite it).")
+        else:
+            print(writing.write(cfg, ep, force=a.force, next_episode=_calendar_next(cfg, ep.id)))
     if a.cmd in ("factcheck", "draft"):
         print(writing.factcheck(cfg, ep))
         if a.cmd == "draft":

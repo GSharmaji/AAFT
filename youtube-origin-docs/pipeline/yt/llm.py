@@ -56,6 +56,11 @@ class Claude:
         )
         self.model = cfg.get("llm.model", "claude-opus-5-5")
         self.fallbacks = bool(cfg.get("llm.fallbacks", True))
+        self.prices = (  # USD: per million input tokens, per million output tokens, per web search
+            float(cfg.get("llm.price_input_per_mtok", 4.0)),
+            float(cfg.get("llm.price_output_per_mtok", 20.0)),
+            float(cfg.get("llm.price_per_search", 0.01)),
+        )
 
     def ask(
         self,
@@ -82,6 +87,7 @@ class Claude:
         texts: list[str] = []
         sources: dict[str, str] = {}
         model = self.model
+        usage = [0, 0, 0]  # input tokens, output tokens, web searches
         for _ in range(8):  # pause_turn continuations
             kwargs: dict[str, Any] = dict(
                 model=self.model, max_tokens=max_tokens, system=system,
@@ -109,6 +115,13 @@ class Claude:
                 raise PipelineError("Could not reach the Anthropic API (network).") from e
 
             model = getattr(msg, "model", model)
+            u = getattr(msg, "usage", None)
+            if u is not None:
+                usage[0] += sum(getattr(u, k, 0) or 0 for k in
+                                ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+                usage[1] += getattr(u, "output_tokens", 0) or 0
+                stu = getattr(u, "server_tool_use", None)
+                usage[2] += (getattr(stu, "web_search_requests", 0) or 0) if stu is not None else 0
             if msg.stop_reason == "refusal":
                 details = getattr(msg, "stop_details", None)
                 raise PipelineError(f"Claude declined this request: {getattr(details, 'explanation', '') or 'no details'}")
@@ -129,6 +142,10 @@ class Claude:
         else:
             raise PipelineError("Web research did not finish after 8 continuations.")
 
+        p_in, p_out, p_search = self.prices
+        cost = usage[0] / 1e6 * p_in + usage[1] / 1e6 * p_out + usage[2] * p_search
+        print(f"  Claude usage: {usage[0]:,} input + {usage[1]:,} output tokens, {usage[2]} web searches "
+              f"(~${cost:.2f}, list prices; cached input is cheaper)")
         text = "".join(texts).strip()
         if schema is not None:
             try:
