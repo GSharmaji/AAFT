@@ -130,7 +130,10 @@ def _dispatch(cfg: Config, a: argparse.Namespace) -> int:
         else:
             print(writing.write(cfg, ep, force=a.force, next_episode=_calendar_next(cfg, ep.id)))
     if a.cmd in ("factcheck", "draft"):
-        print(writing.factcheck(cfg, ep))
+        if resume and writing.factcheck_is_current(ep):
+            print("factcheck.md already matches the current script — skipping (run `factcheck` to redo it).")
+        else:
+            print(writing.factcheck(cfg, ep))
         if a.cmd == "draft":
             print(f"\nNext: fix the script using factcheck.md, delete each [VERIFY] tag, then: python -m yt approve {ep.id} script")
         return 0

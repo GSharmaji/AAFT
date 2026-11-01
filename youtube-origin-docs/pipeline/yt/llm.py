@@ -86,8 +86,34 @@ class Claude:
         messages: list[dict] = [{"role": "user", "content": prompt}]
         texts: list[str] = []
         sources: dict[str, str] = {}
-        model = self.model
-        usage = [0, 0, 0]  # input tokens, output tokens, web searches
+        state: dict[str, Any] = {"model": self.model, "usage": [0, 0, 0]}  # tokens in, tokens out, searches
+        try:
+            self._loop(system, messages, output_config, tools, max_tokens, texts, sources, state)
+        finally:
+            self._report(state)  # also on failure: finished continuations were billed
+
+        text = "".join(texts).strip()
+        if schema is not None:
+            try:
+                json.loads(text)
+            except json.JSONDecodeError as e:
+                raise PipelineError(f"Claude returned invalid JSON: {e}") from e
+        return Answer(text, [(t, u) for u, t in sources.items()], state["model"])
+
+    def _report(self, state: dict[str, Any]) -> None:
+        tin, tout, searches = state["usage"]
+        if not (tin or tout or searches):
+            return
+        p_in, p_out, p_search = self.prices
+        cost = tin / 1e6 * p_in + tout / 1e6 * p_out + searches * p_search
+        note = "list prices; cached input is cheaper"
+        if state["model"] != self.model:
+            note += f"; answered by fallback model {state['model']}, whose price may differ"
+        print(f"  Claude usage: {tin:,} input + {tout:,} output tokens, {searches} web searches (~${cost:.2f}, {note})")
+
+    def _loop(self, system: str, messages: list[dict], output_config: dict, tools: list[dict], max_tokens: int,
+              texts: list[str], sources: dict[str, str], state: dict[str, Any]) -> None:
+        usage = state["usage"]
         for _ in range(8):  # pause_turn continuations
             kwargs: dict[str, Any] = dict(
                 model=self.model, max_tokens=max_tokens, system=system,
@@ -111,10 +137,18 @@ class Claude:
                 raise PipelineError(f"Claude rejected the request: {e.message}") from e
             except self.anthropic.RateLimitError as e:
                 raise PipelineError("Rate limited by the Anthropic API. Wait a minute and re-run this stage.") from e
+            except self.anthropic.APIStatusError as e:
+                raise PipelineError(
+                    f"Anthropic API error {e.status_code}: {e.message}. Re-run this stage; finished stages are kept. "
+                    "A call that fails mid-stream may still be billed — check the Console's usage page."
+                ) from e
             except self.anthropic.APIConnectionError as e:
-                raise PipelineError("Could not reach the Anthropic API (network).") from e
+                raise PipelineError(
+                    "Lost the connection to the Anthropic API. Re-run this stage; finished stages are kept. "
+                    "A call that fails mid-stream may still be billed — check the Console's usage page."
+                ) from e
 
-            model = getattr(msg, "model", model)
+            state["model"] = getattr(msg, "model", state["model"])
             u = getattr(msg, "usage", None)
             if u is not None:
                 usage[0] += sum(getattr(u, k, 0) or 0 for k in
@@ -138,18 +172,5 @@ class Claude:
                 continue
             if msg.stop_reason == "max_tokens":
                 raise PipelineError("Output hit max_tokens. Raise llm.max_tokens or split the task.")
-            break
-        else:
-            raise PipelineError("Web research did not finish after 8 continuations.")
-
-        p_in, p_out, p_search = self.prices
-        cost = usage[0] / 1e6 * p_in + usage[1] / 1e6 * p_out + usage[2] * p_search
-        print(f"  Claude usage: {usage[0]:,} input + {usage[1]:,} output tokens, {usage[2]} web searches "
-              f"(~${cost:.2f}, list prices; cached input is cheaper)")
-        text = "".join(texts).strip()
-        if schema is not None:
-            try:
-                json.loads(text)
-            except json.JSONDecodeError as e:
-                raise PipelineError(f"Claude returned invalid JSON: {e}") from e
-        return Answer(text, [(t, u) for u, t in sources.items()], model)
+            return
+        raise PipelineError("Web research did not finish after 8 continuations.")

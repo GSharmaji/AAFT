@@ -179,9 +179,22 @@ def factcheck(cfg: Config, ep: Episode) -> str:
         web=int(cfg.get("llm.max_web_searches_factcheck", 40)),
     )
     out = ep.file("factcheck.md")
-    out.write_text(f"# Fact-check — {ep.id}\n\n_Generated {_today()} by {answer.model}. A human must "
+    if out.exists():  # keep the previous check (and any notes you added to it)
+        out.replace(ep.file("factcheck.previous.md"))
+    out.write_text(f"<!-- script_digest: {_digest(script.read_text())} -->\n"
+                   f"# Fact-check — {ep.id}\n\n_Generated {_today()} by {answer.model}. A human must "
                    "still apply the fixes and remove each [VERIFY] tag._\n\n" + answer.with_sources())
     return str(out)
+
+
+def factcheck_is_current(ep: Episode) -> bool:
+    """True if factcheck.md was made from the script exactly as it is now."""
+    out, script = ep.file("factcheck.md"), ep.file("script.md")
+    if not (out.exists() and script.exists()):
+        return False
+    first = out.read_text().split("\n", 1)[0]
+    m = re.match(r"<!-- script_digest: (\w+) -->", first)
+    return bool(m) and m.group(1) == _digest(script.read_text())
 
 
 # ---------------------------------------------------------------- approvals
@@ -274,23 +287,29 @@ def shots(cfg: Config, ep: Episode) -> list[dict]:
                 "prompt": sc.vis if i == 1 else f"{sc.vis} — a different angle or close-up detail",
             })
 
+    result = None
     if cfg.llm_enabled:
         listing = "\n".join(
             f'{p["id"]} | scene cue: {p["vis"]} | narration: {p["text"]}' for p in plan
         )
-        result = Claude(cfg).ask(
-            prompts.SHOTS,
-            f"Company: {ep.company}. Write one image prompt per shot id below.\n\n{listing}",
-            effort=cfg.get("llm.effort_light", "medium"),
-            schema=SHOT_SCHEMA,
-        ).json()["shots"]
+        try:
+            result = Claude(cfg).ask(
+                prompts.SHOTS,
+                f"Company: {ep.company}. Write one image prompt per shot id below.\n\n{listing}",
+                effort=cfg.get("llm.effort_light", "medium"),
+                schema=SHOT_SCHEMA,
+            ).json()["shots"]
+        except PipelineError as e:
+            # Shot prompts improve variety but are not essential: fall back instead of stopping production.
+            print(f"WARNING: Claude shot prompts failed ({e}). Using each scene's [VIS] cue instead.")
+    if result is not None:
         by_id = {s["id"]: s["prompt"].strip() for s in result if s.get("prompt")}
         missing = [p["id"] for p in plan if p["id"] not in by_id]
         for p in plan:
             p["prompt"] = by_id.get(p["id"], p["prompt"])
         if missing:
             print(f"NOTE: {len(missing)} shot(s) kept the default prompt: {', '.join(missing[:8])}")
-    else:
+    elif not cfg.llm_enabled:
         print("NOTE: no Claude key (or dry run) — shots reuse each scene's [VIS] cue.")
 
     out = ep.dir(".") / "shots.json"
