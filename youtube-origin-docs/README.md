@@ -82,7 +82,7 @@ Keys you need:
 
 | Key | For | Cost |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | research, script, fact-check, shot prompts, packaging, ideation | ~$3–8 per episode |
+| `YT_ANTHROPIC_API_KEY` (or `ANTHROPIC_API_KEY` outside Claude Code) | research, script, fact-check, shot prompts, packaging, ideation. A key from console.anthropic.com → API Keys; API usage is billed separately from a Claude plan | ~$3–8 per episode |
 | `ELEVENLABS_API_KEY` + voice id | narration | ~$5 per episode |
 | `OPENAI_API_KEY` | images (`images.provider: openai`) — or use `manual` and drop in your own PNGs | ~$5–20 per episode |
 | `YT_CLIENT_ID/SECRET/REFRESH_TOKEN` | API upload only — after your Google project passes YouTube's audit | free |

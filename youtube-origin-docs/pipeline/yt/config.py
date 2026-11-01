@@ -16,6 +16,12 @@ class PipelineError(RuntimeError):
     """A clear, user-facing error (bad input, missing approval, missing key)."""
 
 
+def api_key() -> str:
+    """The pipeline's own Anthropic key. YT_ANTHROPIC_API_KEY wins so it never collides with
+    a Claude Code session's own ANTHROPIC_API_KEY handling."""
+    return os.environ.get("YT_ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_API_KEY") or ""
+
+
 class Config:
     def __init__(self, path: Path | None = None, *, dry_run: bool = False):
         self.path = Path(path or os.environ.get("YT_CONFIG") or PIPELINE_DIR / "config.yaml").resolve()
@@ -49,9 +55,7 @@ class Config:
 
     @property
     def llm_enabled(self) -> bool:
-        return not self.dry_run and bool(
-            os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN") or os.environ.get("ANTHROPIC_PROFILE")
-        )
+        return not self.dry_run and bool(api_key())
 
     @property
     def episodes_dir(self) -> Path:

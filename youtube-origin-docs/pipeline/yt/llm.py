@@ -10,10 +10,11 @@ shot list, packaging, ideation).
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
-from .config import Config, PipelineError
+from .config import Config, PipelineError, api_key
 
 WEB_SEARCH = "web_search_20260209"
 WEB_FETCH = "web_fetch_20260209"
@@ -41,13 +42,18 @@ class Claude:
     def __init__(self, cfg: Config):
         if not cfg.llm_enabled:
             raise PipelineError(
-                "This stage needs Claude. Set ANTHROPIC_API_KEY (see pipeline/.env.example). "
-                "Note: --dry-run never calls Claude."
+                "This stage needs Claude. Set YT_ANTHROPIC_API_KEY (or ANTHROPIC_API_KEY) — see "
+                "pipeline/.env.example. Note: --dry-run never calls Claude."
             )
         import anthropic  # imported lazily so offline stages don't need it
 
         self.anthropic = anthropic
-        self.client = anthropic.Anthropic()
+        # Explicit key + base URL: in Claude Code sessions ANTHROPIC_BASE_URL / ANTHROPIC_API_KEY
+        # belong to Claude Code itself and must not redirect or authenticate the pipeline's calls.
+        self.client = anthropic.Anthropic(
+            api_key=api_key(),
+            base_url=os.environ.get("YT_ANTHROPIC_BASE_URL") or "https://api.anthropic.com",
+        )
         self.model = cfg.get("llm.model", "claude-opus-5-5")
         self.fallbacks = bool(cfg.get("llm.fallbacks", True))
 
@@ -91,7 +97,10 @@ class Claude:
                 with stream as s:
                     msg = s.get_final_message()
             except self.anthropic.AuthenticationError as e:
-                raise PipelineError("Anthropic API key rejected. Check ANTHROPIC_API_KEY.") from e
+                raise PipelineError(
+                    "Anthropic API key rejected. Check YT_ANTHROPIC_API_KEY: it must be an API key from "
+                    "console.anthropic.com -> API Keys, on an account with API credits."
+                ) from e
             except self.anthropic.BadRequestError as e:
                 raise PipelineError(f"Claude rejected the request: {e.message}") from e
             except self.anthropic.RateLimitError as e:
