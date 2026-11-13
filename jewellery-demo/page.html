@@ -16,7 +16,7 @@
   <section class="intro">
     <p class="eyebrow">Every piece on this page is drawn live in 3D. No photos were used.</p>
     <h1>See it the way you would in your hand.</h1>
-    <p class="lede">Turn it. Change the metal. Change the stone. Check it against your skin tone. Then walk through the six shots a good product page shows, in the right order.</p>
+    <p class="lede">Turn it. Change the metal. Change the stone. Check it against your skin tone. Pick a model with your skin tone and size. Then walk through the six shots a good product page shows, in the right order.</p>
   </section>
 
   <section id="collection" aria-labelledby="collection-h">
@@ -33,10 +33,6 @@
           <button type="button" id="light-phone" aria-pressed="false">Phone snap</button>
         </div>
         <p class="hint" id="hint">Drag to turn. Scroll or pinch to zoom.</p>
-        <div class="slot" id="slot" hidden>
-          <p class="slot-h">On-model photo goes here</p>
-          <p>Shot six is a real photo on a real person, picked to suit this piece: skin tone, age, hand or neckline, and styling that keeps the jewellery in focus.</p>
-        </div>
         <p class="fallback" id="fallback" hidden>This browser could not start the 3D view. Open the page in a recent version of Chrome, Safari, Edge or Firefox.</p>
       </div>
       <div class="shots" id="shots" role="group" aria-label="Six shots, in page order"></div>
@@ -64,9 +60,18 @@
         <h3><label for="carat" id="carat-label">Carat</label> <span class="pick" id="carat-pick"></span></h3>
         <input type="range" id="carat" min="0.5" max="3" step="0.1" value="1.2">
       </div>
-      <div class="opt">
-        <h3>Skin tone backdrop <span class="pick" id="tone-pick"></span></h3>
-        <div class="swatches" id="tones" role="group" aria-label="Skin tone backdrop"></div>
+      <div class="model">
+        <p class="eyebrow">Model</p>
+        <p class="small">Pick who wears it. Shot six shows the piece on that model.</p>
+        <div class="opt">
+          <h3>Skin tone <span class="pick" id="tone-pick"></span></h3>
+          <div class="swatches" id="tones" role="group" aria-label="Skin tone"></div>
+        </div>
+        <div class="opt" id="fit-opt">
+          <h3><span id="fit-label">Finger size</span> <span class="pick" id="fit-pick"></span></h3>
+          <div class="chips" id="fits" role="group" aria-label="Fit"></div>
+        </div>
+        <button type="button" class="ghost" id="see-model">See it on the model</button>
       </div>
 
       <dl class="spec" id="spec" aria-label="Piece details"></dl>
@@ -89,6 +94,7 @@
           <li><b>Honest scale.</b> Real millimetres next to every carat weight.</li>
           <li><b>Their own skin tone.</b> Yellow gold and platinum read very differently on different skin.</li>
           <li><b>Six shots in a fixed order.</b> Hero, profile, top, detail, tone, on model.</li>
+          <li><b>The piece is never redrawn.</b> The same exact 3D piece sits on every model, so what is shown is what ships.</li>
         </ul>
       </div>
       <div>

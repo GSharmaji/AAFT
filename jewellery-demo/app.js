@@ -37,6 +37,13 @@ const SHOTS = [
   { id: 'tone', name: 'On tone' },
   { id: 'model', name: 'On model' },
 ];
+const FINGER = { label: 'Finger size', options: ['Slim, 15.3 mm', 'Medium, 16.5 mm', 'Broad, 18.4 mm'] };
+const FITS = {
+  solitaire: FINGER, halo: FINGER, eternity: FINGER,
+  pendant: { label: 'Chain length', options: ['16 inch', '18 inch', '20 inch'] },
+  bracelet: { label: 'Wrist size', options: ['15 cm', '16.5 cm', '18 cm'] },
+};
+const INNER_R = [7.65, 8.25, 9.2];
 const PRODUCTS = [
   { id: 'solitaire', kind: 'Ring', name: 'Aria Solitaire', base: 28000, shapes: true, build: buildSolitaire,
     caratLabel: 'Carat', setting: 'Four prong', blurb: 'One stone, four prongs, a plain band. The stone sits high so light gets in from the sides.' },
@@ -52,7 +59,7 @@ const PRODUCTS = [
     caratLabel: 'Carat', setting: 'Cup set, 46 stones', blurb: 'One unbroken line of stones. Total weight is three times the figure shown on the slider.' },
 ];
 
-const state = { product: 'solitaire', metal: 'yellow', gem: 'diamond', shape: 'round', carat: 1.2, tone: 'none', shot: 'hero', light: 'studio' };
+const state = { fit: 1, product: 'solitaire', metal: 'yellow', gem: 'diamond', shape: 'round', carat: 1.2, tone: 'none', shot: 'hero', light: 'studio' };
 const $ = (id) => document.getElementById(id);
 const find = (list, id) => list.find((x) => x.id === id);
 const inr = (n) => 'Rs ' + new Intl.NumberFormat('en-IN').format(Math.round(n / 100) * 100);
@@ -145,18 +152,96 @@ function ringOfStones(count, d, place, mats) {
   return inst;
 }
 
-const BAND_R = 9.2;
+/* ---------- display forms: the body the piece is shown on in shot six ---------- */
+
+function lathe(pts, mat, seg = 48) {
+  return new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg), mat);
+}
+function handForm(r, mats) {
+  const g = new THREE.Group();
+  const geo = lathe([[0, -47], [r * 1.14, -46], [r * 1.1, -30], [r * 1.02, -12], [r, 0], [r, 5], [r * 1.09, 13], [r, 21],
+    [r * 0.93, 32], [r * 0.8, 40], [r * 0.55, 44.5], [0, 46]], mats.skin, 40).geometry;
+  const finger = (x, y, z, s) => {
+    const m = new THREE.Mesh(geo, mats.skin);
+    m.rotation.x = Math.PI / 2;
+    m.position.set(x, y, z);
+    m.scale.setScalar(s);
+    g.add(m);
+  };
+  const off = 2.05 * r + 4.5;
+  finger(0, 0, 0, 1);
+  finger(-off, -0.6, 7, 1.04);
+  finger(off, -1, -11, 0.88);
+  const palm = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), mats.skin);
+  palm.scale.set(r * 4.7, r * 1.2, 30);
+  palm.position.set(0, -r * 0.3, -66);
+  g.add(palm);
+  return { group: g, center: V(0, r * 0.5, 3), radius: 25, dir: V(0.22, 1, -0.6), hide: [] };
+}
+function armForm(rw, mats) {
+  const g = new THREE.Group();
+  const arm = lathe([[0, -98], [1.45, -94], [1.3, -60], [1.1, -25], [1, 0], [1.02, 10], [1.14, 24], [1.22, 38], [1.12, 54], [0.8, 64], [0, 68]]
+    .map(([f, y]) => [f * rw, y]), mats.skin);
+  arm.scale.set(1.12, 1, 0.86);
+  g.add(arm);
+  return { group: g, center: V(0, 2, 0), radius: 40, dir: V(0.3, 0.32, 1), hide: [] };
+}
+const BUST = [[-150, 96], [-110, 94], [-70, 88], [-35, 78], [-12, 66], [0, 58], [10, 52], [22, 47], [45, 44], [75, 45], [92, 47]];
+function bustR(y) {
+  if (y <= BUST[0][0]) return BUST[0][1];
+  for (let i = 1; i < BUST.length; i++) {
+    if (y <= BUST[i][0]) {
+      const [y0, r0] = BUST[i - 1], [y1, r1] = BUST[i];
+      return r0 + ((r1 - r0) * (y - y0)) / (y1 - y0);
+    }
+  }
+  return BUST[BUST.length - 1][1];
+}
+function bustForm(drop, w, chainTopY, mats) {
+  const g = new THREE.Group();
+  const zc = -bustR(-drop) - w * 0.55;
+  const bust = lathe(BUST.map(([y, r]) => [r, y]), mats.skin, 64);
+  bust.scale.x = 1.3;
+  bust.position.set(0, drop, zc);
+  g.add(bust);
+  const yF = chainTopY - drop, pts = [];
+  for (let i = 0; i < 120; i++) {
+    const th = (i / 120) * Math.PI * 2, k = Math.abs(Math.sin(th / 2));
+    const yb = yF + (26 - yF) * Math.pow(k, 1.1);
+    const rho = bustR(yb) + 0.5 + w * 0.55 * Math.pow(1 - k, 6);
+    pts.push(V(1.3 * rho * Math.sin(th), yb + drop, zc + rho * Math.cos(th)));
+  }
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 360, 0.42, 8, true), mats.metal));
+  return { group: g, center: V(0, drop * 0.55, 0), radius: drop * 0.75 + 34, dir: V(0.1, 0.04, 1), hide: [] };
+}
+function earForm(gap, w, mats) {
+  const g = new THREE.Group();
+  const blob = (sx, sy, sz, x, y, z, tilt = 0) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), mats.skin);
+    m.scale.set(sx, sy, sz);
+    m.position.set(x, y, z);
+    m.rotation.z = tilt;
+    g.add(m);
+  };
+  const lz = -w * 0.5 - 4.2;
+  blob(8, 9, 4, gap, 0, lz);                          // lobe
+  blob(14, 30, 4.5, gap + 3, 24, lz - 0.5, -0.2);     // ear
+  blob(92, 112, 74, gap - 11, 32, lz - 73);           // head
+  blob(50, 120, 45, gap + 2, -150, lz - 78);          // neck
+  return { group: g, center: V(gap - 2, 12, 0), radius: 40, dir: V(0.3, 0.08, 1), hide: [] };
+}
 
 /* ---------- pieces ---------- */
 
 function buildSolitaire(c, mats) {
   const size = stoneSize(c.carat, c.shape);
   const g = new THREE.Group();
+  const BAND_R = INNER_R[c.fit] + 0.9;
   g.add(new THREE.Mesh(new THREE.TorusGeometry(BAND_R, 0.9, 24, 120), mats.metal));
   const h = head(c.shape, size, mats);
   h.position.y = BAND_R + 0.5 + size.w * 0.47;
   g.add(h);
-  return { group: g, focus: h.position.clone(), focusSize: size.l, size, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.75, 0.62, 1.25), shadow: true };
+  return { form: handForm(INNER_R[c.fit] - 0.05, mats), group: g, focus: h.position.clone(), focusSize: size.l, size, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.75, 0.62, 1.25), shadow: true };
 }
 
 function buildHalo(c, mats) {
@@ -174,12 +259,13 @@ function buildEternity(c, mats) {
   const n = 24;
   const d = Math.min(6.5 * Math.cbrt(c.carat / n), 2.45);
   const g = new THREE.Group();
+  const BAND_R = INNER_R[c.fit] + 1.05;
   g.add(new THREE.Mesh(new THREE.TorusGeometry(BAND_R, 1.05, 24, 120), mats.metal));
   g.add(ringOfStones(n, d, (t) => {
     const nrm = V(Math.cos(t), Math.sin(t), 0);
     return { pos: nrm.clone().multiplyScalar(BAND_R + 0.72 + d * 0.2), normal: nrm };
   }, mats));
-  return { group: g, focus: V(0, BAND_R + 1, 0), focusSize: 9, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.8, 0.55, 1.2), shadow: true };
+  return { form: handForm(INNER_R[c.fit] - 0.05, mats), group: g, focus: V(0, BAND_R + 1, 0), focusSize: 9, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.8, 0.55, 1.2), shadow: true };
 }
 
 function buildStuds(c, mats) {
@@ -193,7 +279,9 @@ function buildStuds(c, mats) {
     h.position.x = sx * gap;
     g.add(h);
   }
-  return { group: g, focus: V(gap, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.18, 0.3), hero: V(0.45, 0.3, 1.3), shadow: false };
+  const form = earForm(gap, size.w, mats);
+  form.hide.push(g.children[0]);
+  return { form, group: g, focus: V(gap, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.18, 0.3), hero: V(0.45, 0.3, 1.3), shadow: false };
 }
 
 function buildPendant(c, mats) {
@@ -208,12 +296,15 @@ function buildPendant(c, mats) {
   bail.rotation.y = Math.PI / 2;
   g.add(bail);
   const pts = [V(-24, 32, -5), V(-13, 15, -1.5), V(0, bailY + 0.75, 0), V(13, 15, -1.5), V(24, 32, -5)];
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.3, 8), mats.metal));
-  return { group: g, focus: V(0, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.1, 0.45), hero: V(0.35, 0.05, 1.3), shadow: false, frame: { center: V(0, 9, 0), radius: 17 } };
+  const chain = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.3, 8), mats.metal);
+  g.add(chain);
+  const form = bustForm([38, 62, 88][c.fit], size.w, bailY + 0.75, mats);
+  form.hide.push(chain);
+  return { form, group: g, focus: V(0, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.1, 0.45), hero: V(0.35, 0.05, 1.3), shadow: false, frame: { center: V(0, 9, 0), radius: 17 } };
 }
 
 function buildBracelet(c, mats) {
-  const n = 46, R = 27;
+  const n = 46, rw = [150, 165, 180][c.fit] / (2 * Math.PI), R = rw * 1.12 + 1.3;
   const d = Math.min(6.5 * Math.cbrt((c.carat * 3) / n), 3.45);
   const g = new THREE.Group();
   const place = (off) => (t) => {
@@ -228,7 +319,7 @@ function buildBracelet(c, mats) {
     cups.setMatrixAt(i, m.compose(pos, q.setFromUnitVectors(UP, normal), s));
   }
   g.add(cups, ellipseTube(R - d * 0.3, R - d * 0.3, d * 0.2, 0, mats.metal));
-  return { group: g, focus: V(0, 0, R), focusSize: 10, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(0.2, 0.12, 1), hero: V(0.5, 0.75, 1.1), shadow: true };
+  return { form: armForm(rw, mats), group: g, focus: V(0, 0, R), focusSize: 10, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(0.2, 0.12, 1), hero: V(0.5, 0.75, 1.1), shadow: true };
 }
 
 /* ---------- renderer ---------- */
@@ -277,6 +368,7 @@ function makeEnv(kind) {
 
 function makeMaterials() {
   return {
+    skin: new THREE.MeshStandardMaterial({ metalness: 0, roughness: 0.58, side: THREE.DoubleSide, envMapIntensity: 0.62 }),
     metal: new THREE.MeshStandardMaterial({ metalness: 1, roughness: 0.13 }),
     shell: new THREE.MeshPhysicalMaterial({ metalness: 0, roughness: 0, transmission: 1, ior: 1.9, thickness: 0.25, dispersion: 2,
       flatShading: true, side: THREE.DoubleSide, envMapIntensity: 1.5, attenuationDistance: 6 }),
@@ -288,13 +380,18 @@ function makeMaterials() {
 function stageColor() {
   if (state.light === 'phone') return '#B5A88F';
   const tone = find(TONES, state.tone);
-  if (tone.color) return tone.color;
+  if (tone.color && state.shot !== 'model') return tone.color;
   return getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#E3E7E9';
 }
 
 function applyLook() {
   const metal = find(METALS, state.metal), g = find(GEMS, state.gem);
   mats.metal.color.set(metal.color);
+  mats.skin.color.set(find(TONES, state.tone).color || TONES[3].color);
+  const worn = state.shot === 'model';
+  current.form.group.visible = worn;
+  for (const o of current.form.hide) o.visible = !worn;
+  shadowMesh.visible = current.shadow && !worn;
   mats.shell.color.set(g.id === 'diamond' ? '#FFFFFF' : g.tint).lerp(new THREE.Color('#FFFFFF'), g.id === 'diamond' ? 0 : 0.45);
   mats.shell.attenuationColor.set(g.tint);
   mats.core.color.set(g.core);
@@ -326,21 +423,25 @@ function rebuild() {
     current.group.traverse((o) => { if (o.geometry && o.geometry !== smallStoneGeo) o.geometry.dispose(); });
   }
   const product = find(PRODUCTS, state.product);
-  current = product.build({ carat: state.carat, shape: product.shapes ? state.shape : 'round' }, mats);
+  current = product.build({ carat: state.carat, shape: product.shapes ? state.shape : 'round', fit: state.fit }, mats);
   scene.add(current.group);
   const box = new THREE.Box3().setFromObject(current.group);
   const sphere = box.getBoundingSphere(new THREE.Sphere());
   current.center = current.frame ? current.frame.center : sphere.center;
   current.radius = current.frame ? current.frame.radius : sphere.radius;
-  shadowMesh.visible = current.shadow;
   shadowMesh.position.set(sphere.center.x, box.min.y - 0.05, sphere.center.z);
   shadowMesh.scale.set(Math.max(box.max.x - box.min.x, 6) * 1.7, Math.max(box.max.z - box.min.z, 6) * 1.7, 1);
+  current.group.add(current.form.group);
 }
 
 /* Where the camera sits for each of the six shots. */
 function shotPose(id) {
   const fit = (r) => (r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))) * 0.98;
   const c = current.center, r = current.radius;
+  if (id === 'model') {
+    const f = current.form;
+    return { target: f.center.clone(), pos: f.center.clone().add(f.dir.clone().normalize().multiplyScalar(fit(f.radius))) };
+  }
   if (id === 'detail') {
     const dist = fit(current.focusSize * 0.75);
     return { target: current.focus.clone(), pos: current.focus.clone().add(current.hero.clone().lerp(current.top, 0.35).normalize().multiplyScalar(dist)) };
@@ -360,7 +461,7 @@ function goToShot(id, instant) {
     tween = { start: performance.now(), p0: camera.position.clone(), t0: controls.target.clone(), p1: pose.pos, t1: pose.target };
   }
   controls.minDistance = current.focusSize * 1.2;
-  controls.maxDistance = current.radius * 9;
+  controls.maxDistance = Math.max(current.radius, id === 'model' ? current.form.radius : 0) * 9;
 }
 
 function resize() {
@@ -427,6 +528,7 @@ function refreshText() {
   const mm = shape.ratio === 1 ? `${w.toFixed(1)} mm` : `${l.toFixed(1)} x ${w.toFixed(1)} mm`;
   const rows = [['Stone', g.name], ['Shape', shape.name], [p.caratLabel, state.carat.toFixed(2) + ' ct'],
     [p.shapes ? 'Stone size' : 'Each stone', mm], ['Metal', m.name], ['Setting', p.setting]];
+  if (FITS[p.id]) rows.push([FITS[p.id].label, FITS[p.id].options[state.fit]]);
   $('spec').replaceChildren(...rows.flatMap(([k, v]) => {
     const dt = document.createElement('dt'), dd = document.createElement('dd');
     dt.textContent = k; dd.textContent = v;
@@ -440,20 +542,28 @@ function refreshText() {
   pressed($('shots'), state.shot);
   $('light-studio').setAttribute('aria-pressed', String(state.light === 'studio'));
   $('light-phone').setAttribute('aria-pressed', String(state.light === 'phone'));
-  $('slot').hidden = state.shot !== 'model';
-  $('hint').hidden = state.shot === 'model';
+  $('hint').textContent = state.shot === 'model'
+    ? 'Display form, not a photo. The piece is exact.'
+    : 'Drag to turn. Scroll or pinch to zoom.';
+  const fit = FITS[p.id];
+  $('fit-opt').hidden = !fit;
+  if (fit) {
+    $('fit-label').textContent = fit.label;
+    $('fit-pick').textContent = fit.options[state.fit];
+    [...$('fits').children].forEach((b, i) => { b.textContent = fit.options[i]; b.setAttribute('aria-pressed', String(i === state.fit)); });
+  }
   $('toast').textContent = '';
 }
 
 function setShot(id, instant) {
   state.shot = id;
-  if (id === 'tone' && state.tone === 'none') state.tone = 't3';
-  if (id !== 'model') goToShot(id === 'tone' ? 'hero' : id, instant);
+  if ((id === 'tone' || id === 'model') && state.tone === 'none') state.tone = 't3';
   applyLook();
+  goToShot(id === 'tone' ? 'hero' : id, instant);
   refreshText();
 }
 function update(shapeChanged) {
-  if (shapeChanged) { rebuild(); goToShot(state.shot === 'model' || state.shot === 'tone' ? 'hero' : state.shot, true); }
+  if (shapeChanged) { rebuild(); applyLook(); goToShot(state.shot === 'tone' ? 'hero' : state.shot, true); }
   applyLook();
   refreshText();
 }
@@ -477,7 +587,14 @@ function buildInterface() {
     b.children[0].textContent = String(SHOTS.indexOf(s) + 1).padStart(2, '0');
     b.children[1].textContent = s.name;
   }, (s) => setShot(s.id));
+  for (let i = 0; i < 3; i++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.addEventListener('click', () => { state.fit = i; update(true); });
+    $('fits').append(b);
+  }
   $('carat').addEventListener('input', (e) => { state.carat = Number(e.target.value); update(true); });
+  $('see-model').addEventListener('click', () => { setShot('model'); $('stage').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' }); });
   $('light-studio').addEventListener('click', () => { state.light = 'studio'; update(false); });
   $('light-phone').addEventListener('click', () => { state.light = 'phone'; update(false); });
   $('buy').addEventListener('click', () => { $('toast').textContent = 'Added. This is a sample store, so nothing is charged or shipped.'; });
