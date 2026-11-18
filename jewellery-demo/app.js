@@ -271,6 +271,7 @@ function handForm(r, mats, age = 1) {
     [r * 0.93, 32], [r * 0.8, 40], [r * 0.55, 44.5], [0, 46]], mats.skin, 40).geometry;
   const finger = (x, y, z, s) => {
     const m = new THREE.Mesh(geo, mats.skin);
+    m.userData.main = x === 0;
     m.rotation.x = Math.PI / 2;
     m.position.set(x, y, z);
     m.scale.setScalar(s);
@@ -433,15 +434,30 @@ function buildBracelet(c, mats) {
 
 /* ---------- renderer ---------- */
 
-let renderer, scene, camera, controls, envs, mats, current, shadowMesh, photoChain;
+let renderer, scene, camera, controls, envs, mats, current, shadowMesh, photoChain, photoShadow;
 const PHOTO_DIST = 400;
 const maskMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+const catchMat = new THREE.ShadowMaterial({ color: '#2A160C', opacity: 0.4 });
+let sun;
+const texCache = {};
+/* The model photo as the scene background, cropped like object-fit: cover, so stones refract the skin. */
+function photoTexture() {
+  const src = `models/${current.photo.part}-${toneGroup()}.webp`;
+  const t = texCache[src] ??= new THREE.TextureLoader().load(src, () => applyLook());
+  t.colorSpace = THREE.SRGBColorSpace;
+  const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1;
+  if (w >= h) { t.repeat.set(1, h / w); t.offset.set(0, (1 - h / w) / 2); }
+  else { t.repeat.set(w / h, 1); t.offset.set((1 - w / h) / 2, 0); }
+  return t;
+}
 const isPhoto = () => state.shot === 'model' && !!current?.photo;
 
 /* Puts the exact 3D piece on the model photo: anchor point on the photo point, scaled to the body part. */
 function placePhoto() {
   const g = current.group, img = $('photo');
   if (photoChain) { scene.remove(photoChain); photoChain.geometry.dispose(); photoChain = null; }
+  if (photoShadow) photoShadow.visible = false;
+  if (sun) sun.visible = false;
   if (!isPhoto()) {
     g.position.set(0, 0, 0); g.quaternion.identity(); g.scale.setScalar(1);
     img.hidden = true;
@@ -450,8 +466,7 @@ function placePhoto() {
   }
   const info = current.photo, cal = PHOTOS[info.part][toneGroup()];
   const src = `models/${info.part}-${toneGroup()}.webp`;
-  if (!img.src.endsWith(src)) img.src = src;
-  img.hidden = false;
+  img.hidden = true;
   controls.enabled = false;
   const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1, side = Math.max(w, h);
   const k = (2 * PHOTO_DIST * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
@@ -460,7 +475,7 @@ function placePhoto() {
   const s = perMm * side * k;                          // world units per mm
   const q = new THREE.Quaternion(), e = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
   const rad = THREE.MathUtils.degToRad;
-  if (info.part === 'hand') q.copy(e(0, 0, rad(cal.angle))).multiply(e(Math.PI / 2, 0, 0));
+  if (info.part === 'hand') q.copy(e(0, 0, rad(cal.angle))).multiply(e(rad(72), 0, 0)); // leans toward the wrist, like a camera slightly above
   if (info.part === 'wrist') q.copy(e(0, 0, rad(cal.angle))).multiply(e(0, rad(16), 0)).multiply(e(0, 0, -Math.PI / 2));
   const at = info.part === 'neck' ? [cal.at[0], cal.at[1] + info.drop * perMm] : cal.at;
   const P = toWorld(at);
@@ -473,6 +488,29 @@ function placePhoto() {
     const curve = new THREE.CatmullRomCurve3([L, mid(L, -1), P, mid(R, 1), R]);
     photoChain = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.32 * s, 6), mats.metal);
     scene.add(photoChain);
+  }
+  // A light just above the camera casts the piece's shadow onto the hidden body form.
+  g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(g), size = box.getSize(V(0, 0, 0)), c = box.getCenter(V(0, 0, 0));
+  sun.visible = info.part !== 'neck';
+  sun.target.position.copy(c);
+  sun.position.copy(c).add(V(0.15, 0.35, 1).normalize().multiplyScalar(300));
+  const r = Math.max(size.x, size.y, size.z) * 0.9 + 4;
+  Object.assign(sun.shadow.camera, { left: -r, right: r, top: r, bottom: -r, near: 1, far: 700 });
+  sun.shadow.camera.updateProjectionMatrix();
+  g.traverse((o) => { if (o.isMesh) o.castShadow = !o.receiveShadow && o.material !== maskMat; });
+  // Soft contact shadow for the pendant, which has no body form behind it.
+  if (info.part === 'neck') {
+    if (!photoShadow) {
+      photoShadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: '#2A160C', map: shadowTexture(), transparent: true, depthWrite: false }));
+      photoShadow.renderOrder = -2;
+      scene.add(photoShadow);
+    }
+    const grow = 1.25;
+    photoShadow.visible = true;
+    photoShadow.position.set(c.x + 0.4 * s, c.y - 1.1 * s, box.min.z - 0.5);
+    photoShadow.scale.set(size.x * grow, Math.max(size.y * grow, 3 * s), 1);
+    photoShadow.material.opacity = 0.8;
   }
 }
 const canvas = $('view');
@@ -506,6 +544,17 @@ function makeEnv(kind) {
       const sz = bright ? 1 + rnd() * 1.6 : 1.8 + rnd() * 2.4;
       panel(sz, sz, sz, dir.x, dir.y, dir.z, bright ? '#FFFFFF' : '#1B2026', bright ? 30 : 1);
     }
+  } else if (kind === 'sparkle') {
+    // Dark room with a few hard bright lights: small stones read as black and white facets, like real diamonds.
+    room('#1E2328');
+    let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 26; i++) {
+      const dir = V(rnd() - 0.5, rnd() * 0.8 - 0.1, rnd() - 0.5).normalize().multiplyScalar(13.5);
+      const sz = 1.2 + rnd() * 2.2;
+      panel(sz, sz, sz, dir.x, dir.y, dir.z, '#FFFFFF', 22);
+    }
+    panel(30, 0.2, 6, 0, 14, -6, '#E8EEF5', 3);
   } else if (kind === 'day') {
     room('#8C99A6');
     panel(20, 0.2, 20, 0, 14, 0, '#EEF4FF', 5);        // sky
@@ -560,29 +609,43 @@ function applyLook() {
   mats.metal.color.set(metal.color);
   mats.skin.color.set(find(TONES, state.tone).color || TONES[3].color);
   const worn = state.shot === 'model', photo = isPhoto();
-  current.form.group.visible = worn && (!photo || current.photo.part === 'wrist');
-  current.form.group.traverse((o) => {
-    if (!o.isMesh) return;
+  current.form.group.visible = worn && (!photo || current.photo.part !== 'neck');
+  // On photos the body form is invisible: it only hides the far side of the piece and catches its shadow.
+  for (const o of [...current.form.group.children]) {
+    if (!o.isMesh || o.userData.twin === true) continue;
     o.userData.mat ??= o.material;
     o.material = photo ? maskMat : o.userData.mat;
     o.renderOrder = photo ? -1 : 0;
-  });
+    o.visible = !photo || current.photo.part !== 'hand' || o.userData.main === true;
+    if (!o.userData.catcher) {
+      const t = new THREE.Mesh(o.geometry, catchMat);
+      t.userData.twin = true;
+      t.receiveShadow = true;
+      o.add(t);
+      o.userData.catcher = t;
+    }
+    o.userData.catcher.visible = photo;
+  }
   for (const o of current.form.hide) o.visible = !worn;
   shadowMesh.visible = current.shadow && !worn;
   mats.shell.color.set(g.id === 'diamond' ? '#FFFFFF' : g.tint).lerp(new THREE.Color('#FFFFFF'), g.id === 'diamond' ? 0 : 0.45);
   mats.shell.attenuationColor.set(g.tint);
   mats.core.color.set(g.core);
   mats.small.color.set(g.core);
-  const L = photo ? LIGHTS[0] : find(LIGHTS, state.light), tint = new THREE.Color(L.tint);
+  const L = photo ? { ...LIGHTS[1], exposure: 0.92 } : find(LIGHTS, state.light), tint = new THREE.Color(L.tint);
   mats.core.color.multiply(tint);
   mats.small.color.multiply(tint);
   scene.environment = envs[L.env];
   mats.core.envMap = mats.small.envMap = L.id === 'phone' ? envs.phone : envs.gem;
+  if (photo) mats.core.envMap = mats.small.envMap = envs.sparkle;
+  mats.shell.envMap = photo ? envs.sparkle : null;
+  mats.shell.envMapIntensity = photo ? 1.6 : 1.5;
+  mats.shell.needsUpdate = true;
   renderer.toneMappingExposure = L.exposure;
-  mats.metal.roughness = L.rough ?? 0.13;
+  mats.metal.roughness = photo ? 0.22 : L.rough ?? 0.13;
   mats.skin.roughness = [0.5, 0.58, 0.68][ageIndex()];
-  scene.background = photo ? null : new THREE.Color(stageColor());
   placePhoto();
+  scene.background = photo ? photoTexture() : new THREE.Color(stageColor());
 }
 
 function shadowTexture() {
@@ -659,7 +722,7 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  if (current && mats) placePhoto();
+  if (current && mats) { placePhoto(); if (isPhoto()) scene.background = photoTexture(); }
 }
 
 let visible = true, idleSince = 0;
@@ -832,6 +895,8 @@ function start() {
   }
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(28, 1, 0.5, 2000);
   controls = new OrbitControls(camera, canvas);
@@ -840,8 +905,15 @@ function start() {
   controls.autoRotateSpeed = 0.9;
   controls.addEventListener('start', () => { idleSince = Infinity; tween = null; });
   controls.addEventListener('end', () => { idleSince = performance.now(); });
-  envs = Object.fromEntries(['studio', 'phone', 'gem', 'day', 'golden', 'candle'].map((k) => [k, makeEnv(k)]));
+  envs = Object.fromEntries(['studio', 'phone', 'gem', 'sparkle', 'day', 'golden', 'candle'].map((k) => [k, makeEnv(k)]));
   mats = makeMaterials();
+  sun = new THREE.DirectionalLight('#FFFFFF', 0.5);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.bias = -0.0008;
+  sun.shadow.normalBias = 0.02;
+  sun.visible = false;
+  scene.add(sun, sun.target);
   shadowMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, depthWrite: false }));
   shadowMesh.rotation.x = -Math.PI / 2;
   scene.add(shadowMesh);
