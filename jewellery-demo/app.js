@@ -92,6 +92,32 @@ const isDemi = () => state.tier === 'demi';
 const metalName = (m) => (isDemi() ? m.demi : m.name);
 const gemName = (g) => (isDemi() ? g.demi : g.name);
 const ageIndex = () => find(AGES, state.age).i;
+/* AI model photos. at = point the piece is anchored to, as a fraction of the photo.
+   size = how much of the photo the reference part covers: finger width, ear height, neck width or wrist depth.
+   angle = turn of the finger or arm in degrees. sides = where a chain meets the neck. */
+const PHOTOS = {
+  hand: {
+    fair: { at: [0.61, 0.585], size: 0.095, angle: 2 },
+    medium: { at: [0.483, 0.62], size: 0.088, angle: -17 },
+    deep: { at: [0.617, 0.575], size: 0.09, angle: 0 },
+  },
+  ear: {
+    fair: { at: [0.551, 0.627], size: 0.47 },
+    medium: { at: [0.461, 0.64], size: 0.51 },
+    deep: { at: [0.556, 0.632], size: 0.51 },
+  },
+  neck: {
+    fair: { at: [0.5, 0.37], size: 0.3, sides: [[0.355, 0.26], [0.655, 0.26]] },
+    medium: { at: [0.505, 0.38], size: 0.29, sides: [[0.36, 0.26], [0.67, 0.26]] },
+    deep: { at: [0.51, 0.37], size: 0.29, sides: [[0.36, 0.245], [0.67, 0.245]] },
+  },
+  wrist: {
+    fair: { at: [0.45, 0.495], size: 0.24, angle: 1 },
+    medium: { at: [0.62, 0.495], size: 0.245, angle: 0 },
+    deep: { at: [0.5, 0.51], size: 0.255, angle: 0 },
+  },
+};
+const toneGroup = () => ({ t1: 'fair', t2: 'fair', t5: 'deep', t6: 'deep' }[state.tone] || 'medium');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- geometry helpers ---------- */
@@ -323,7 +349,7 @@ function buildSolitaire(c, mats) {
   const h = head(c.shape, size, mats);
   h.position.y = BAND_R + 0.5 + size.w * 0.47;
   g.add(h);
-  return { form: handForm(INNER_R[c.fit] - 0.05, mats, c.age), group: g, focus: h.position.clone(), focusSize: size.l, size, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.75, 0.62, 1.25), shadow: true };
+  return { photo: { part: 'hand', anchor: V(0, 0, 0), mm: 2 * INNER_R[c.fit] }, form: handForm(INNER_R[c.fit] - 0.05, mats, c.age), group: g, focus: h.position.clone(), focusSize: size.l, size, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.75, 0.62, 1.25), shadow: true };
 }
 
 function buildHalo(c, mats) {
@@ -347,7 +373,7 @@ function buildEternity(c, mats) {
     const nrm = V(Math.cos(t), Math.sin(t), 0);
     return { pos: nrm.clone().multiplyScalar(BAND_R + 0.72 + d * 0.2), normal: nrm };
   }, mats));
-  return { form: handForm(INNER_R[c.fit] - 0.05, mats, c.age), group: g, focus: V(0, BAND_R + 1, 0), focusSize: 9, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.8, 0.55, 1.2), shadow: true };
+  return { photo: { part: 'hand', anchor: V(0, 0, 0), mm: 2 * INNER_R[c.fit] }, form: handForm(INNER_R[c.fit] - 0.05, mats, c.age), group: g, focus: V(0, BAND_R + 1, 0), focusSize: 9, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(1, 0.14, 0.1), hero: V(0.8, 0.55, 1.2), shadow: true };
 }
 
 function buildStuds(c, mats) {
@@ -363,7 +389,7 @@ function buildStuds(c, mats) {
   }
   const form = earForm(gap, size.w, mats, c.age);
   form.hide.push(g.children[0]);
-  return { form, group: g, focus: V(gap, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.18, 0.3), hero: V(0.45, 0.3, 1.3), shadow: false };
+  return { photo: { part: 'ear', anchor: V(gap, 0, 0), mm: 60 }, form, group: g, focus: V(gap, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.18, 0.3), hero: V(0.45, 0.3, 1.3), shadow: false };
 }
 
 function buildPendant(c, mats) {
@@ -383,7 +409,7 @@ function buildPendant(c, mats) {
   g.add(chain);
   const form = bustForm([38, 62, 88][c.fit], size.w, bailY + 0.75, mats);
   form.hide.push(chain);
-  return { form, group: g, focus: V(0, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.1, 0.45), hero: V(0.35, 0.05, 1.3), shadow: false, frame: { center: V(0, 9, 0), radius: 17 } };
+  return { photo: { part: 'neck', anchor: V(0, bailY + 0.75, 0), mm: 108, drop: [22, 55, 88][c.fit] }, form, group: g, focus: V(0, 0, 0), focusSize: size.l, size, top: V(0, 0.001, 1), profile: V(1, 0.1, 0.45), hero: V(0.35, 0.05, 1.3), shadow: false, frame: { center: V(0, 9, 0), radius: 17 } };
 }
 
 function buildBracelet(c, mats) {
@@ -402,12 +428,53 @@ function buildBracelet(c, mats) {
     cups.setMatrixAt(i, m.compose(pos, q.setFromUnitVectors(UP, normal), s));
   }
   g.add(cups, ellipseTube(R - d * 0.3, R - d * 0.3, d * 0.2, 0, mats.metal));
-  return { form: armForm(rw, mats), group: g, focus: V(0, 0, R), focusSize: 10, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(0.2, 0.12, 1), hero: V(0.5, 0.75, 1.1), shadow: true };
+  return { photo: { part: 'wrist', anchor: V(0, 0, 0), mm: 2 * 1.12 * rw }, form: armForm(rw, mats), group: g, focus: V(0, 0, R), focusSize: 10, size: { w: d, l: d }, top: V(0, 1, 0.001), profile: V(0.2, 0.12, 1), hero: V(0.5, 0.75, 1.1), shadow: true };
 }
 
 /* ---------- renderer ---------- */
 
-let renderer, scene, camera, controls, envs, mats, current, shadowMesh;
+let renderer, scene, camera, controls, envs, mats, current, shadowMesh, photoChain;
+const PHOTO_DIST = 400;
+const maskMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+const isPhoto = () => state.shot === 'model' && !!current?.photo;
+
+/* Puts the exact 3D piece on the model photo: anchor point on the photo point, scaled to the body part. */
+function placePhoto() {
+  const g = current.group, img = $('photo');
+  if (photoChain) { scene.remove(photoChain); photoChain.geometry.dispose(); photoChain = null; }
+  if (!isPhoto()) {
+    g.position.set(0, 0, 0); g.quaternion.identity(); g.scale.setScalar(1);
+    img.hidden = true;
+    controls.enabled = true;
+    return;
+  }
+  const info = current.photo, cal = PHOTOS[info.part][toneGroup()];
+  const src = `models/${info.part}-${toneGroup()}.webp`;
+  if (!img.src.endsWith(src)) img.src = src;
+  img.hidden = false;
+  controls.enabled = false;
+  const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1, side = Math.max(w, h);
+  const k = (2 * PHOTO_DIST * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
+  const toWorld = ([u, v]) => V((u * side - (side - w) / 2 - w / 2) * k, -(v * side - (side - h) / 2 - h / 2) * k, 0);
+  const perMm = cal.size / info.mm;                    // photo fraction per mm
+  const s = perMm * side * k;                          // world units per mm
+  const q = new THREE.Quaternion(), e = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
+  const rad = THREE.MathUtils.degToRad;
+  if (info.part === 'hand') q.copy(e(0, 0, rad(cal.angle))).multiply(e(Math.PI / 2, 0, 0));
+  if (info.part === 'wrist') q.copy(e(0, 0, rad(cal.angle))).multiply(e(0, rad(16), 0)).multiply(e(0, 0, -Math.PI / 2));
+  const at = info.part === 'neck' ? [cal.at[0], cal.at[1] + info.drop * perMm] : cal.at;
+  const P = toWorld(at);
+  g.scale.setScalar(s);
+  g.quaternion.copy(q);
+  g.position.copy(P).sub(info.anchor.clone().multiplyScalar(s).applyQuaternion(q));
+  if (info.part === 'neck') {
+    const [L, R] = cal.sides.map(toWorld);
+    const mid = (A, out) => A.clone().lerp(P, 0.5).add(V(out * 0.012 * side * k, 0, 0));
+    const curve = new THREE.CatmullRomCurve3([L, mid(L, -1), P, mid(R, 1), R]);
+    photoChain = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.32 * s, 6), mats.metal);
+    scene.add(photoChain);
+  }
+}
 const canvas = $('view');
 
 function makeEnv(kind) {
@@ -492,15 +559,21 @@ function applyLook() {
   const metal = find(METALS, state.metal), g = find(GEMS, state.gem);
   mats.metal.color.set(metal.color);
   mats.skin.color.set(find(TONES, state.tone).color || TONES[3].color);
-  const worn = state.shot === 'model';
-  current.form.group.visible = worn;
+  const worn = state.shot === 'model', photo = isPhoto();
+  current.form.group.visible = worn && (!photo || current.photo.part === 'wrist');
+  current.form.group.traverse((o) => {
+    if (!o.isMesh) return;
+    o.userData.mat ??= o.material;
+    o.material = photo ? maskMat : o.userData.mat;
+    o.renderOrder = photo ? -1 : 0;
+  });
   for (const o of current.form.hide) o.visible = !worn;
   shadowMesh.visible = current.shadow && !worn;
   mats.shell.color.set(g.id === 'diamond' ? '#FFFFFF' : g.tint).lerp(new THREE.Color('#FFFFFF'), g.id === 'diamond' ? 0 : 0.45);
   mats.shell.attenuationColor.set(g.tint);
   mats.core.color.set(g.core);
   mats.small.color.set(g.core);
-  const L = find(LIGHTS, state.light), tint = new THREE.Color(L.tint);
+  const L = photo ? LIGHTS[0] : find(LIGHTS, state.light), tint = new THREE.Color(L.tint);
   mats.core.color.multiply(tint);
   mats.small.color.multiply(tint);
   scene.environment = envs[L.env];
@@ -508,7 +581,8 @@ function applyLook() {
   renderer.toneMappingExposure = L.exposure;
   mats.metal.roughness = L.rough ?? 0.13;
   mats.skin.roughness = [0.5, 0.58, 0.68][ageIndex()];
-  scene.background = new THREE.Color(stageColor());
+  scene.background = photo ? null : new THREE.Color(stageColor());
+  placePhoto();
 }
 
 function shadowTexture() {
@@ -559,6 +633,14 @@ function shotPose(id) {
 
 let tween = null;
 function goToShot(id, instant) {
+  if (id === 'model' && isPhoto()) {
+    tween = null;
+    camera.position.set(0, 0, PHOTO_DIST);
+    controls.target.set(0, 0, 0);
+    controls.minDistance = 1;
+    controls.maxDistance = Infinity;
+    return;
+  }
   const pose = shotPose(id);
   if (instant || reduceMotion) {
     camera.position.copy(pose.pos);
@@ -577,6 +659,7 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  if (current && mats) placePhoto();
 }
 
 let visible = true, idleSince = 0;
@@ -659,7 +742,7 @@ function refreshText() {
   const L = find(LIGHTS, state.light);
   $('stage').dataset.dark = String(!!L.dark && (state.shot === 'model' || find(TONES, state.tone).id === 'none'));
   $('hint').textContent = state.shot === 'model'
-    ? 'Display form, not a photo. The piece is exact.'
+    ? (isPhoto() ? 'AI model photo. The jewellery is the exact 3D piece.' : 'Display form, not a photo. The piece is exact.')
     : 'Drag to turn. Scroll or pinch to zoom.';
   const fit = FITS[p.id];
   $('fit-opt').hidden = !fit;
@@ -740,7 +823,7 @@ function renderThumbs() {
 function start() {
   buildInterface();
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   } catch (err) {
     $('fallback').hidden = false;
     canvas.hidden = true;

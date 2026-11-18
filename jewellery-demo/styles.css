@@ -157,3 +157,4 @@ th, td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); vertic
 
 .tiers { margin-top: -8px; }
 .stage[data-dark="true"] .hint { color: #F4ECE4; opacity: 0.8; }
+.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
